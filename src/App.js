@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import './App.css';
-import Header from './Header.js';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
+import { TextField, Button } from '@material-ui/core';
 
 const isEmpty = (str) => str.length === 0;
 
@@ -18,11 +21,30 @@ class App extends Component {
     console.log(this.state.searchTerm);
 
   }
+  //scoate tot headerul intr-o componenta separata si verifica material-ui la component demos la app bar
 
   render() {
     return (
       <div className="App">
-        <Header/>
+        <header className="App-header">
+          <AppBar position="static" color="primary">
+            <Toolbar>
+              <Typography variant="h6" color="inherit">
+                Photos
+              </Typography>
+             <TextField placeholder = "Search on Spotify" 
+                        onChange = {this.onTextChange}
+                        value = {this.state.searchTerm}
+             />
+             <Button 
+              onClick={this.onSearchClick} 
+              disabled={isEmpty(this.state.searchTerm)}
+              >
+                Search
+             </Button>
+            </Toolbar>
+          </AppBar>
+        </header>
       </div>
     );
   }
