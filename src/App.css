@@ -1,0 +1,19 @@
+.search-input input{
+    color: white;
+
+}
+
+.result .add-button {
+    opacity: 0;
+    transition: opacity 2ms;
+}
+
+.result:hover .add-button {
+    opacity: 1;
+    transition: opacity 2ms;
+}
+
+.artist-card {
+    max-width: 300px;
+    margin-right: 10px;
+}
