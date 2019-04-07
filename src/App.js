@@ -1,33 +1,33 @@
 import React, { Component } from 'react';
-import './App.css';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import { TextField, Button, List, ListItem, ListItemAvatar, ListItemText, Avatar, Card, CardContent } from '@material-ui/core';
-import axios from 'axios';
+import { getArtists } from './services/api';
 
-const API_URL = 'http://ws.audioscrobbler.com/2.0/?Limit=5&format=json&method=artist.search&api_key=' + process.env.REACT_APP_LASTFM_APPKEY;
+import {
+  TextField,
+  Button,
+  List
+} from '@material-ui/core';
+
+import { ArtistCard } from './components/ArtistCard';
+import { SearchResult } from './components/SearchResult';
+
+import './App.css';
 
 const isEmpty = (str) => str.length === 0;
-
-//&artist=plaiesii
-//!!! ToDo: Tema: modificare aspect aplicatie 
-// afisare useri
-
 class App extends Component {
   state = {
     searchTerm: '',
-    artists: [],
-    users: [],
     savedArtists: []
   }
 
   componentDidMount() {
     const existing = localStorage.getItem('savedArtists')
-    if(existing) {
+    if (existing) {
       this.setState({ savedArtists: JSON.parse(existing) })
     }
-  } 
+  }
 
   onTextChange = (event) => {
     const value = event.target.value;
@@ -35,27 +35,14 @@ class App extends Component {
     this.setState({ searchTerm: value });
   }
 
-  search = (terms) => {
-    const request = API_URL + '&artist=' + terms;
+  search = async (terms) => {
 
-    console.log(request);
-
-    axios.get(request).then((response) => {
-      const results = response.data.results;
-      const artists = results.artistmatches.artist.map((artist) => {
-        const avatarImage = artist.image.find(image => image.size === 'medium');
-        const imageUrl = avatarImage['#text'];
-        return { ...artist, avatar: imageUrl }
-      });
-
-      this.setState({ artists });
-    })
-
+    const artists = await getArtists(terms);
+    this.setState({ artists: artists })
   }
 
   onSearchClick = () => {
     this.search(this.state.searchTerm);
-
   }
 
   clearSearch = () => {
@@ -65,26 +52,36 @@ class App extends Component {
     })
   }
 
+  updateArtists = (newArtists) => {
+    this.setState({ savedArtists: newArtists })
+    localStorage.setItem('savedArtists', JSON.stringify(newArtists));
+  }
+
+  deleteArtist = (artist) => {
+    const result = this.state.savedArtists.filter(item => item.name !== artist.name);
+    this.updateArtists(result);
+  }
+
   onResultClick = (artist) => {
     this.clearSearch();
     const savedArtists = this.state.savedArtists;
-    savedArtists.push(artist)
-    this.setState({ savedArtists: savedArtists })
-    localStorage.setItem('savedArtists', JSON.stringify(savedArtists) );
-
+    savedArtists.push(artist);
+    this.updateArtists(savedArtists);
   }
 
   render() {
+    const results = this.state.artists || [];
     return (
       <div className="App">
-        <header className="App-header"> 
+        <header className="App-header">
           <AppBar position="static" color="primary">
-            <Toolbar>
+            <Toolbar className="search-bar">
               <Typography variant="h6" color="inherit">
                 Photos
               </Typography>
-              <TextField className="search-input"
-                placeholder="Search on Spotify"
+              <TextField
+                placeholder="Search on Last.fm"
+                className="search-input"
                 onChange={this.onTextChange}
                 value={this.state.searchTerm}
               />
@@ -95,48 +92,30 @@ class App extends Component {
                 disabled={isEmpty(this.state.searchTerm)}
               >
                 Search
-             </Button>
+              </Button>
               {!isEmpty(this.state.searchTerm) && (
                 <Button
                   onClick={this.clearSearch}
                   variant="contained"
                 >
-                  Clear search
-              </Button>)
+                  Clear
+                </Button>)
               }
             </Toolbar>
           </AppBar>
         </header>
-        <List>
+
+        <List className="search-results">
           {
-            this.state.artists.map((artist) => {
-              return (
-                <ListItem 
-                    button 
-                    key={artist.name}
-                    className="result"
-                    onClick={() => this.onResultClick(artist)}
-                   >
-                  <ListItemAvatar>
-                    <Avatar src={artist.avatar} alt={artist.name} />
-                  </ListItemAvatar>
-                  <ListItemText primary={artist.name} />
-                  <Button variant="outlined" color="secondary" size="small" className="add-button">Add to favorites</Button>
-                </ListItem>
-              )
+            results.map((artist, index) => {
+              return <SearchResult key={index} artist={artist} onResultClick={this.onResultClick} />
             })
           }
         </List>
         <div className="artist-container">
           {
-            this.state.savedArtists.map((artist) => {
-              return(
-                <Card className = "artist-card">
-                  <CardContent>
-                    {artist.name}
-                  </CardContent>
-                </Card>
-              )
+            this.state.savedArtists.map((artist, index) => {
+              return <ArtistCard artist={artist} key={index} deleteArtist={this.deleteArtist} />
             })
           }
         </div>
